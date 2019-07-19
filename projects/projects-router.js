@@ -49,7 +49,7 @@ router.get('/:id/actions', async (req, res) => {
     }
 })
 
-router.post('/', validateProjectBody, validateUniqueName, async (req, res) => {
+router.post('/', validateNewProjectBody, validateUniqueName, async (req, res) => {
     const newProject = req.body
     try {
         const project = await Projects.postProject(newProject)
@@ -61,7 +61,7 @@ router.post('/', validateProjectBody, validateUniqueName, async (req, res) => {
     }
 })
 
-router.post('/:id/actions', validateActionBody, async (req, res) => {
+router.post('/:id/actions', validateNewActionBody, async (req, res) => {
     const newAction = {
         description: req.body.description,
         notes: req.body.notes,
@@ -91,7 +91,7 @@ async function validateUniqueName(req, res, next) {
     }
 }
 
-function validateProjectBody(req, res, next) {
+function validateNewProjectBody(req, res, next) {
     req.body.name && req.body.description
         ? next()
         : res.status(404).json({
@@ -99,7 +99,7 @@ function validateProjectBody(req, res, next) {
         })
 }
 
-function validateActionBody(req, res, next) {
+function validateNewActionBody(req, res, next) {
     req.body.description && req.body.notes
         ? next()
         : res.status(404).json({
