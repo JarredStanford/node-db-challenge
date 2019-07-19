@@ -2,6 +2,7 @@ const db = require('../data/db-config.js')
 
 module.exports = {
     find,
+    findProjectByName,
     findById,
     postProject,
     postAction
@@ -11,13 +12,20 @@ function find() {
     return db('projects')
 }
 
-function findById(id) {
+function findProjectByName(name) {
     return db('projects')
+        .where({ name })
+}
+
+function findById(id) {
+    return db('projects as p')
         .where({ id })
         .first()
+        .select('p.id', 'p.name', 'p.description', 'p.completed')
         .then(project => {
-            return db('actions')
+            return db('actions as a')
                 .where({ project_id: id })
+                .select('a.id', 'a.description', 'a.notes', 'a.completed')
                 .then(actions => {
                     return { ...project, actions }
                 })

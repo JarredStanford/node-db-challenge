@@ -7,6 +7,9 @@ const router = express.Router()
 router.get('/', async (req, res) => {
     try {
         const projects = await Projects.find()
+        projects.map(project => {
+            project.completed = project.completed === 1 ? true : false
+        })
         res.status(200).json(projects)
     } catch (err) {
         res.status(500).json({
@@ -21,7 +24,24 @@ router.get('/:id/actions', async (req, res) => {
 
     try {
         const project = await Projects.findById(id)
-        res.status(200).json(project)
+        if (project.name) {
+            if (project.actions.length > 0) {
+                console.log(project.completed)
+                project.completed = project.completed === 1 ? true : false
+                project.actions.map(action => {
+                    action.completed = action.completed === 1 ? true : false
+                })
+                res.status(200).json(project)
+            } else {
+                res.status(404).json({
+                    messsage: "This project has no associated actions."
+                })
+            }
+        } else {
+            res.status(404).json({
+                message: "The project with this ID could not be found."
+            })
+        }
     } catch (err) {
         res.status(500).json({
             message: "There was an error retrieving the project."
@@ -29,9 +49,8 @@ router.get('/:id/actions', async (req, res) => {
     }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', validateProjectBody, validateUniqueName, async (req, res) => {
     const newProject = req.body
-
     try {
         const project = await Projects.postProject(newProject)
         res.status(200).json(project)
@@ -42,13 +61,14 @@ router.post('/', async (req, res) => {
     }
 })
 
-router.post('/:id/actions', async (req, res) => {
+router.post('/:id/actions', validateActionBody, async (req, res) => {
     const newAction = {
         description: req.body.description,
         notes: req.body.notes,
         completed: req.body.completed,
         project_id: req.params.id
     }
+
     try {
         const action = await Projects.postAction(newAction)
         res.status(200).json(action)
@@ -58,5 +78,33 @@ router.post('/:id/actions', async (req, res) => {
         })
     }
 })
+
+//middleware
+async function validateUniqueName(req, res, next) {
+    project = await Projects.findProjectByName(req.body.name)
+    if (project.length > 0) {
+        res.status(404).json({
+            message: "A project with this name already exists."
+        })
+    } else {
+        next()
+    }
+}
+
+function validateProjectBody(req, res, next) {
+    req.body.name && req.body.description
+        ? next()
+        : res.status(404).json({
+            message: "Please include a name and body with your new project."
+        })
+}
+
+function validateActionBody(req, res, next) {
+    req.body.description && req.body.notes
+        ? next()
+        : res.status(404).json({
+            message: "Please include a description and notes with your new action."
+        })
+}
 
 module.exports = router
