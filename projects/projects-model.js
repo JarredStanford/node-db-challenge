@@ -5,7 +5,9 @@ module.exports = {
     findProjectByName,
     findById,
     postProject,
-    postAction
+    postAction,
+    updateProject,
+    deleteProject
 }
 
 function find() {
@@ -40,4 +42,16 @@ async function postProject(project) {
 async function postAction(action) {
     const [id] = await db('actions').insert(action)
     return findById(action.project_id)
+}
+
+async function updateProject(changes, id) {
+    const updated = await db('projects').where({ id }).update(changes)
+    return findById(id)
+}
+
+async function deleteProject(id) {
+    const deleted = await db('projects').where({ id }).del()
+    if (deleted === 1) {
+        return deleted
+    } else return null
 }
